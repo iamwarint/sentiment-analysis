@@ -1,0 +1,7 @@
+runtime: python311  # ใช้ Python 3.11
+entrypoint: gunicorn -b :$PORT app:app  # ใช้ gunicorn ในการรัน Flask
+
+env_variables:
+  FLASK_ENV: "production"
+
+instance_class: F2  # กำหนด instance class ถ้าคุณต้องการ performance ที่ดีขึ้น

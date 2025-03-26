@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis - Restaurant Review</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+</head>
+<body>
+    <!-- Header Bar -->
+    <div class="header">
+        &nbsp;&nbsp;Sentiment Analysis - Restaurant Review
+    </div>
+
+    <!-- ปุ่ม Hamburger Menu -->
+    <div class="hamburger-menu" onclick="toggleSidebar()">
+        &#9776; <!-- ใช้สัญลักษณ์ขีด 3 ขีด -->
+    </div>
+
+    <div class="container">
+        <!-- Chat Container -->
+        <div class="chat-container">
+            <div class="chat-box" id="chatBox"></div>
+            <div class="input-box">
+                <input type="text" id="userInput" placeholder="พิมพ์ข้อความที่นี่..." onkeypress="handleKeyPress(event)">
+                <button class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                <input type="file" id="fileInput" style="display:none;" accept=".csv,.json,.txt">
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click();"><i class="fas fa-upload"></i></button>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h2>Information</h2>
+            <div class="model-details">
+                <p><strong>Model Name:</strong> WangchanBERTa</p>
+                <p><strong>Version:</strong> Fine-Tuned</p>
+                <p><strong>Language:</strong> Thai</p>
+                <p><strong>Category:</strong> Sentiment Analysis</p>
+                <p><strong>Application Scope:</strong> Restaurant Review Analysis</p>
+                <p><strong>Rating Scale (1-5 Stars):</strong> Sentiment Interpretation</p>
+                <p><strong>Model Accuracy:</strong> <span id="model-accuracy">XX%</span></p>
+            </div>
+            
+            <h3>About</h3>
+            <p>
+                This project is a fine-tuned Thai language sentiment analysis model 
+                based on WangchanBERTa. It has been trained using restaurant reviews 
+                sourced from Wongnai and Google Reviews to analyze customer sentiments, 
+                providing insights into user experiences based on their feedback.
+            </p>
+            
+            <h3>Author</h3>
+            <p>
+                Developed as a final-year project by a student at 
+                <strong>Kasetsart University, Sriracha Campus</strong>, 
+                under the <strong>Computer Engineering</strong> program.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        }
+
+        function typeText(element, text, speed = 50, callback = null) {
+            let index = 0;
+            function type() {
+                if (index < text.length) {
+                    element.innerHTML += text.charAt(index);
+                    index++;
+                    setTimeout(type, speed);
+                } else if (callback) {
+                    callback();
+                }
+            }
+            type();
+        }
+
+        function typeStars(element, stars, speed = 200, callback = null) {
+            let index = 0;
+            function type() {
+                if (index < stars.length) {
+                    element.innerHTML += stars.charAt(index);
+                    index++;
+                    setTimeout(type, speed);
+                } else if (callback) {
+                    callback();
+                }
+            }
+            type();
+        }
+
+        function sendMessage() {
+            let inputField = document.getElementById("userInput");
+            let text = inputField.value.trim();
+            if (text === "") return;
+
+            let chatBox = document.getElementById("chatBox");
+
+            // แสดงข้อความของผู้ใช้
+            chatBox.innerHTML += `<div class="chat user-chat">${text}</div>`;
+            inputField.value = "";
+
+            // แยกข้อความโดยใช้ `,`
+            let messages = text.includes(",") 
+                ? text.split(",").map(msg => msg.trim()).filter(msg => msg !== "")
+                : [text];
+
+            function processMessage(index) {
+                if (index >= messages.length) return;
+
+                let message = messages[index];
+                let botId = `bot-msg-${Date.now()}-${index}`;
+                let loadingId = `loading-${botId}`;
+
+                // แสดงแอนิเมชันขณะรอผล
+                chatBox.innerHTML += `
+                    <div class="chat bot-chat" id="${loadingId}">
+                        <span class="loading-spinner"></span> <span>กำลังวิเคราะห์...</span>
+                    </div>
+                `;
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                fetch("/predict", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ texts: [message] })  
+                })
+                .then(response => response.json())
+                .then(data => {
+                    let result = data.predictions[0];
+                    let label = parseInt(result.label);
+                    let stars = "⭐".repeat(label);
+
+                    // ซ่อน ℹ️ ไว้ก่อน
+                    let rawDataId = `raw-data-${botId}`;
+                    let rawData = `<span class="info-icon" id="${rawDataId}" onclick="toggleInfo(this)" style="display: none;">i</span>
+                                   <span class="hidden-info"> ${JSON.stringify(result)} </span>`;
+
+                    // แสดงข้อความของบอท
+                    let botMessage = `
+                        <div class="chat bot-chat" id="${botId}">
+                            <div class="bot-text" id="bot-text-${botId}"></div>
+                            <div class="bot-stars" id="bot-stars-${botId}" style="display: inline-block; vertical-align: middle;"></div>
+                            ${rawData}
+                        </div>
+                    `;
+
+                    // แทนที่แอนิเมชันด้วยข้อความบอท
+                    document.getElementById(loadingId).outerHTML = botMessage;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+
+                    // เริ่มพิมพ์ข้อความ
+                    let botTextElement = document.getElementById(`bot-text-${botId}`);
+                    typeText(botTextElement, message, 50, () => {
+                        // หลังจากข้อความเสร็จ ให้แสดงอิโมจิดาว
+                        let botStarsElement = document.getElementById(`bot-stars-${botId}`);
+                        typeStars(botStarsElement, stars, 200, () => {
+                            // หลังจากดาวแสดงครบแล้ว แสดง ℹ️
+                            document.getElementById(rawDataId).style.display = "inline-block";
+
+                            // ไปแสดงข้อความถัดไปหลังจากดีเลย์
+                            setTimeout(() => processMessage(index + 1), 500);
+                        });
+                    });
+                });
+            }
+
+            // เริ่มแสดงข้อความแรก
+            processMessage(0);
+        }
+
+        function toggleInfo(element) {
+            let info = element.nextElementSibling;
+            if (info.style.display === "none" || info.style.display === "") {
+                info.style.display = "inline";
+            } else {
+                info.style.display = "none";
+            }
+        }
+
+        function uploadFile() {
+            let fileInput = document.getElementById("fileInput");
+            let file = fileInput.files[0];
+
+            if (!file) return;
+
+            let chatBox = document.getElementById("chatBox");
+
+            // แสดงข้อความว่าอัปโหลดไฟล์อะไร
+            chatBox.innerHTML += `<div class="chat user-chat">📂 คุณอัปโหลดไฟล์: <b>${file.name}</b></div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            let formData = new FormData();
+            formData.append("file", file);
+
+            let loadingId = `loading-${Date.now()}`;
+            chatBox.innerHTML += `
+                <div class="chat bot-chat" id="${loadingId}">
+                    <span class="loading-spinner"></span> <span>กำลังวิเคราะห์ไฟล์...</span>
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            fetch("/upload", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById(loadingId).outerHTML = "";
+
+                if (data.error) {
+                    chatBox.innerHTML += `<div class="chat bot-chat">❌ เกิดข้อผิดพลาด: ${data.error}</div>`;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    return;
+                }
+
+                let messages = data.texts;
+                let predictions = data.predictions;
+
+                function processMessage(index) {
+                    if (index >= messages.length) return;
+
+                    let message = messages[index];
+                    let prediction = predictions[index];
+                    let label = parseInt(prediction.label);
+                    let stars = "⭐".repeat(label);
+
+                    let botId = `bot-msg-${Date.now()}-${index}`;
+                    let rawDataId = `raw-data-${botId}`;
+
+                    let botMessage = `
+                        <div class="chat bot-chat" id="${botId}">
+                            <div class="bot-text">${message}</div>
+                            <div class="bot-stars" id="bot-stars-${botId}" style="display: inline-block; vertical-align: middle;"></div>
+                            <span class="info-icon" id="${rawDataId}" onclick="toggleInfo(this)" style="display: none;">i</span>
+                            <span class="hidden-info">${JSON.stringify(prediction)}</span>
+                        </div>
+                    `;
+
+                    chatBox.innerHTML += botMessage;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+
+                    let botStarsElement = document.getElementById(`bot-stars-${botId}`);
+                    typeStars(botStarsElement, stars, 200, () => {
+                        document.getElementById(rawDataId).style.display = "inline-flex";
+                        setTimeout(() => processMessage(index + 1), 500);
+                    });
+                }
+
+                processMessage(0);
+            });
+        }
+
+        document.getElementById("fileInput").addEventListener("change", uploadFile);
+        
+        // ฟังก์ชัน toggle เพื่อเปิดและปิด sidebar
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('show'); // เพิ่มหรือลบคลาส .show เพื่อควบคุมการแสดงผล
+        }
+    </script>
+
+    <style>
+        .hidden-info {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        .bot-text {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .bot-stars {
+            font-size: 18px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 5px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</body>
+</html>
