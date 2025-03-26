@@ -3,13 +3,22 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
 import pandas as pd
 import json
+import os
 
 app = Flask(__name__)
 
 # โหลดโมเดล WangchanBERTa
-model_path = "./models/final_model"
-tokenizer = AutoTokenizer.from_pretrained(model_path)
-model = AutoModelForSequenceClassification.from_pretrained(model_path)
+# model_path = "./models/final_model"
+# tokenizer = AutoTokenizer.from_pretrained(model_path)
+# model = AutoModelForSequenceClassification.from_pretrained(model_path)
+
+# กำหนดชื่อ repository ที่เก็บโมเดลใน Hugging Face
+model_name = "iamwarint/sentiment"  # แก้ไขจาก 'huggingface/iamwarint/sentiment' เป็น 'iamwarint/sentiment'
+
+# โหลดโมเดลและ tokenizer จาก Hugging Face
+model = AutoModelForSequenceClassification.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 model.eval()
@@ -78,7 +87,6 @@ def upload_file():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
