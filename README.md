@@ -19,8 +19,10 @@ This project develops a sentiment analysis system for Thai-language restaurant r
 
 ## 📥 Download Fine-Tuned Model and Frontend Code
 [Download Fine-Tuned Model from Google Drive](https://drive.google.com/file/d/1tYrgasr_h96C-qqLx2RpFJ2b1vwiD_Cr/view?usp=sharing)
-[Jump to Frontend source code](https://github.com/iamwarint/sentiment-analysis.git)
+
+[Dataset and Preprocessing Notebooks](https://github.com/Aissariya/Sentiment-Analysis-on-Thai-Language-Restaurant-Reviews)
 
 ## 🌐 Live Demo
 Try the web app here: ## 🌐 Live Demo
 Try the web app here: [sentiment-analysis-gjbh.onrender.com](https://sentiment-analysis-gjbh.onrender.com)
+
