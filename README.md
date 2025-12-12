@@ -25,4 +25,4 @@ This project develops a sentiment analysis system for Thai-language restaurant r
 ## 🌐 Live Demo
 Try the web app here: ## 🌐 Live Demo
 Try the web app here: [sentiment-analysis-gjbh.onrender.com](https://sentiment-analysis-gjbh.onrender.com)
-
+<img width="1919" height="932" alt="image" src="https://github.com/user-attachments/assets/4e8f59f8-b560-40a1-8470-9cb27eea3e86" />
