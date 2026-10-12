@@ -41,7 +41,7 @@
                 <p><strong>Category:</strong> Sentiment Analysis</p>
                 <p><strong>Application Scope:</strong> Restaurant Review Analysis</p>
                 <p><strong>Rating Scale (1-5 Stars):</strong> Sentiment Interpretation</p>
-                <p><strong>Model Accuracy:</strong> <span id="model-accuracy">80.42%</span></p>
+                <p><strong>Published paper F1-score:</strong> <span id="model-f1">80.45%</span> <small>(paper result, not a live accuracy test)</small></p>
             </div>
             
             <h3>About</h3>
@@ -62,6 +62,12 @@
     </div>
 
     <script>
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, char => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            }[char]));
+        }
+
         function handleKeyPress(event) {
             if (event.key === "Enter") {
                 sendMessage();
@@ -72,7 +78,7 @@
             let index = 0;
             function type() {
                 if (index < text.length) {
-                    element.innerHTML += text.charAt(index);
+                    element.textContent += text.charAt(index);
                     index++;
                     setTimeout(type, speed);
                 } else if (callback) {
@@ -104,7 +110,7 @@
             let chatBox = document.getElementById("chatBox");
 
             // แสดงข้อความของผู้ใช้
-            chatBox.innerHTML += `<div class="chat user-chat">${text}</div>`;
+            chatBox.innerHTML += `<div class="chat user-chat">${escapeHtml(text)}</div>`;
             inputField.value = "";
 
             // แยกข้อความโดยใช้ `,`
@@ -194,7 +200,7 @@
             let chatBox = document.getElementById("chatBox");
 
             // แสดงข้อความว่าอัปโหลดไฟล์อะไร
-            chatBox.innerHTML += `<div class="chat user-chat">📂 คุณอัปโหลดไฟล์: <b>${file.name}</b></div>`;
+            chatBox.innerHTML += `<div class="chat user-chat">📂 คุณอัปโหลดไฟล์: <b>${escapeHtml(file.name)}</b></div>`;
             chatBox.scrollTop = chatBox.scrollHeight;
 
             let formData = new FormData();
@@ -217,7 +223,7 @@
                 document.getElementById(loadingId).outerHTML = "";
 
                 if (data.error) {
-                    chatBox.innerHTML += `<div class="chat bot-chat">❌ เกิดข้อผิดพลาด: ${data.error}</div>`;
+                    chatBox.innerHTML += `<div class="chat bot-chat">❌ เกิดข้อผิดพลาด: ${escapeHtml(data.error)}</div>`;
                     chatBox.scrollTop = chatBox.scrollHeight;
                     return;
                 }
@@ -238,7 +244,7 @@
 
                     let botMessage = `
                         <div class="chat bot-chat" id="${botId}">
-                            <div class="bot-text">${message}</div>
+                            <div class="bot-text">${escapeHtml(message)}</div>
                             <div class="bot-stars" id="bot-stars-${botId}" style="display: inline-block; vertical-align: middle;"></div>
                             <span class="info-icon" id="${rawDataId}" onclick="toggleInfo(this)" style="display: none;">i</span>
                             <span class="hidden-info">${JSON.stringify(prediction)}</span>
